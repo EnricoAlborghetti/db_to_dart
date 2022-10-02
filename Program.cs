@@ -1,10 +1,18 @@
-﻿/*
+﻿using Microsoft.Extensions.Configuration;
+
+/*
 1. Connect to database
 2. Read all tables
 3. For each table read all fields
 4. Understand connections
-5. Write interface
+5. Write classes
 */
+
+var builder = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+var config = builder.Build();
 
 // Prepare the output directory
 if (Directory.Exists("output"))
@@ -14,12 +22,7 @@ if (Directory.Exists("output"))
 Directory.CreateDirectory("output");
 
 // Connecto MSSQL and fetch the structure
-var db = Connector.MsSQL(
-    "SQL6020.site4now.net",
-    "db_a26160_northwind_admin",
-    "northwind1",
-    "db_a26160_northwind"
-);
+var db = Connector.MsSQL(config.GetConnectionString("Default"));
 Console.Clear();
 
 // Generate the DART class based on MSSQL structure
