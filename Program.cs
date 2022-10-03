@@ -42,7 +42,7 @@ foreach (var entity in db.Tables)
         .Union(eFields);
     var dClass =
         $@"
-{string.Join("\n", eFields.Select(t => $"import './{t.Name.Pathize(true)}.dart';"))}
+{string.Join("\n", eFields.Select(t => $"import './{t.Name.Pathize()}.dart';"))}
 
 class {entity.Name.Singularize()} {{
     {string.Join("\n    ", entity.Fields.Select(t => t.ToDart()))}
@@ -54,6 +54,6 @@ class {entity.Name.Singularize()} {{
     {entity.Name.Singularize()}({{{string.Join(", ", cFields.Select(t => $"{(t.Nullable ? "" : "required ")}this.{t.Name.Normalize(true)}"))}}});
 }}";
 
-    File.WriteAllText($"output/{entity.Name.Pathize(true)}.dart", dClass);
+    File.WriteAllText($"output/{entity.Name.Pathize()}.dart", dClass);
     Console.WriteLine(dClass);
 }

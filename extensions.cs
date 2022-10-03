@@ -47,7 +47,7 @@ public static class Ext
     //     A string PATHized
     public static string Pathize(this string value)
     {
-        value = value.Singularize(false);
+        value = value.Singularize(false).ToLowerInvariant();
         var res = "";
         foreach (var ch in value)
         {
@@ -57,6 +57,6 @@ public static class Ext
             }
             res += ch.ToString();
         }
-        return res.ToLowerInvariant().Replace("__", "_");
+        return res.Replace("__", "_");
     }
 }
