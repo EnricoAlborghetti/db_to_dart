@@ -30,24 +30,27 @@ public class Field : MicroField
         return $"{Name} of {Table.Name}";
     }
 
+    //
     // Summary:
     //   Convert the field to a dart property
     // Result:
     //   A string formatted
     public string ToDart()
     {
-        return $"{DartType.GetName(Type)}{(Nullable ? "?" : "")} {Name.Replace(" ", "_").ToLower()};";
+        return $"{DartType.GetName(Type)}{(Nullable ? "?" : "")} {Name.Normalize(true)};";
     }
 
+    //
     // Summary:
     //   Convert the field to a dart property
     // Result:
     //   A string formatted
     public string ToChildRelationDart()
     {
-        return $"List<{Table.Name.Replace(" ", "_")}>? {Table.Name.Replace(" ", "_").ToLower()};";
+        return $"List<{Table.Name.Singularize()}>? {Table.Name.Normalize(true)};";
     }
 
+    //
     // Summary:
     //   Convert the field to a dart property
     // Parameters:
@@ -57,7 +60,7 @@ public class Field : MicroField
     //   A string formatted
     public string ToFatherRelationDart(bool nullable)
     {
-        return $"{Table.Name.Replace(" ", "_")}{(nullable ? "?" : "")} {Table.Name.Replace(" ", "_").ToLower()};";
+        return $"{Table.Name.Singularize()}{(nullable ? "?" : "")} {Table.Name.Normalize(true)};";
     }
 }
 
@@ -80,7 +83,6 @@ public class DartType
     //      the enum to convert
     // Results:
     //  The keyword of dart type
-
     public static string GetName(DartFieldType type)
     {
         return typeof(DartType).GetField(type.ToString()).GetValue(null).ToString();

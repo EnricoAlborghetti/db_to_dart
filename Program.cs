@@ -23,7 +23,7 @@ Directory.CreateDirectory("output");
 
 // Connecto MSSQL and fetch the structure
 var db = Connector.MsSQL(config.GetConnectionString("Default"));
-Console.Clear();
+
 
 // Generate the DART class based on MSSQL structure
 foreach (var entity in db.Tables)
@@ -42,18 +42,18 @@ foreach (var entity in db.Tables)
         .Union(eFields);
     var dClass =
         $@"
-{string.Join("\n", eFields.Select(t => $"import './{t.Name.Replace(" ", "_").ToLower()}.dart';"))}
+{string.Join("\n", eFields.Select(t => $"import './{t.Name.Pathize(true)}.dart';"))}
 
-class {entity.Name.Replace(" ", "_")} {{
+class {entity.Name.Singularize()} {{
     {string.Join("\n    ", entity.Fields.Select(t => t.ToDart()))}
 
     {string.Join("\n    ", childrends.Select(t => t.ToChildRelationDart()))}
 
     {string.Join("\n    ", fathers.Select(t => t.FatherField.ToFatherRelationDart(t.Nullable)))}
 
-    {entity.Name.Replace(" ", "_")}({{{string.Join(", ", cFields.Select(t => $"{(t.Nullable ? "" : "required ")}this.{t.Name.Replace(" ", "_").ToLower()}"))}}}){{}}
+    {entity.Name.Singularize()}({{{string.Join(", ", cFields.Select(t => $"{(t.Nullable ? "" : "required ")}this.{t.Name.Normalize(true)}"))}}});
 }}";
 
-    File.WriteAllText($"output/{entity.Name.Replace(" ", "_").ToLower()}.dart", dClass);
+    File.WriteAllText($"output/{entity.Name.Pathize(true)}.dart", dClass);
     Console.WriteLine(dClass);
 }
