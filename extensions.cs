@@ -59,4 +59,10 @@ public static class Ext
         }
         return res.Replace("__", "_");
     }
+
+    public static string WithDefault(this string? value, string @default)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return @default;
+        return value;
+    }
 }
