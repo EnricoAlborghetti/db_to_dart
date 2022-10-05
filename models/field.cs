@@ -65,7 +65,7 @@ public class Field : MicroField
     //   A string formatted
     public string ToFatherRelationDart(bool nullable)
     {
-        return $"{Table.Name.Singularize()}{(nullable ? "?" : "")} {Table.Name.Normalize(true)};";
+        return $"{Table.Name.Singularize()}{(nullable ? "?" : "")} {Table.Name.Singularize(true)};";
     }
 }
 

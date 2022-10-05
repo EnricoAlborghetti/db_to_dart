@@ -20,7 +20,7 @@ public partial class Coder
                 .Where(t => t.FatherField != null)
                 .Select(t => new { FatherField = t.FatherField!, t.Nullable });
             var eFields = fathers
-                .Select(t => new MicroField() { Name = t.FatherField.Table.Name, Nullable = t.Nullable })
+                .Select(t => new MicroField() { Name = t.FatherField.Table.Name.Singularize(), Nullable = t.Nullable })
                 .Union(childrends.Select(t => new MicroField() { Name = t.Table.Name, Nullable = true }));
             var cFields = entity.Fields
                 .Select(t => new MicroField() { Name = t.Name, Nullable = t.Nullable })
