@@ -7,19 +7,20 @@ public partial class Generator
 
     //
     // Summary:
-    //   Init the Generator with Serenity parameters
+    //   Init a Generator with Serenity parameters
     // Parameters:
     //   db:
     //     the read database
     // Returns:
     //   the generator, can only use .Serenity()
-    public static Generator BuildSerenity(Db db)
+    public static Generator BuildSerenity(Db db, string? package = null)
     {
-        Console.WriteLine("Insert app package name [sample]");
-        var package = Console.ReadLine().WithDefault("sample").Trim();
+        package ??= "sample";
+        Console.WriteLine($"Insert app package name [{package}]");
+        package = Console.ReadLine().WithDefault(package).Trim();
 
-        Console.WriteLine($"Insert Serenity Module Name [{package}]");
-        var serenityModule = Console.ReadLine().WithDefault(package).Trim();
+        Console.WriteLine($"Insert Serenity Module Name [{package}Db]");
+        var serenityModule = Console.ReadLine().WithDefault(package + "Db").Trim();
         return new Generator(package, serenityModule, db);
     }
 
@@ -33,7 +34,7 @@ public partial class Generator
     //     the Serenity module name
     //   db:
     //     the read database
-    public Generator(string package, string module, Db db)
+    private Generator(string package, string module, Db db)
     {
         this.Package = package;
         this.Module = module;

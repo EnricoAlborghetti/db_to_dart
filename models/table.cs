@@ -1,6 +1,6 @@
 //
 // Summary:
-//   The table of the database
+//   A table of the database
 public class Table
 {
     public string Name { get; set; }

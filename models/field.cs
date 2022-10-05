@@ -5,11 +5,16 @@ public class MicroField
 {
     public string Name { get; set; }
     public bool Nullable { get; set; }
+
+    public MicroField()
+    {
+        Name = "";
+    }
 }
 
 //
 // Summary:
-//   Field of a table
+//   A field of a table
 public class Field : MicroField
 {
     public DartType.DartFieldType Type { get; set; }
@@ -19,7 +24,7 @@ public class Field : MicroField
 
     public Table Table { get; set; }
 
-    public Field(Table table, string name)
+    public Field(Table table, string name) : base()
     {
         this.Table = table;
         this.Name = name;

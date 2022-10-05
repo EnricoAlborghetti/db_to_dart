@@ -20,13 +20,17 @@ if (Directory.Exists("output"))
     Directory.Delete("output", true);
 }
 Directory.CreateDirectory("output");
-Directory.CreateDirectory("output/models");
 
 // Connecto MSSQL and fetch the structure
 var db = Connector.MsSQL(config.GetConnectionString("Default"));
 
 // Write dart code
-Coder.Dart(db);
+var coder = Coder.Build(db);
+
+coder.Dart();
 
 // Write serenity API
-Generator.BuildSerenity(db).Serenity();
+Generator.BuildSerenity(db,coder.Package).Serenity();
+
+// Write the DI file
+coder.DI();

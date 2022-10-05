@@ -5,12 +5,13 @@ public partial class Coder
     //   Write the dart classes from the db
     // Parameters:
     //   db:
-    //     The database read
-    public static void Dart(Db db)
+    //     The read database
+    public void Dart()
     {
+        Directory.CreateDirectory("output/models");
 
         // Generate the DART class based on MSSQL structure
-        foreach (var entity in db.Tables)
+        foreach (var entity in Db.Tables)
         {
             var childrends = entity.Fields
                 .Where(t => t.ChildrendField != null)

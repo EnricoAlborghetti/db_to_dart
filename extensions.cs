@@ -5,7 +5,7 @@ public static class Ext
     //   Replace " " char with "_" and make the first letter as lowercase if requested
     // Parameters:
     //   value:
-    //     the string to normalize
+    //     a string to normalize
     //   lower:
     //     condition to make the first letter lowercase
     // Returns:
@@ -22,7 +22,7 @@ public static class Ext
     //   Stub function that try to singularize a string (remove ies o s). The input will be normalized
     // Parameters:
     //   value:
-    //     the string to singularize
+    //     a string to singularize
     //   lower:
     //     condition to make the first letter lowercase
     // Returns:
@@ -37,10 +37,10 @@ public static class Ext
 
     //
     // Summary:
-    //   Funtion that make the string lowercase_with_underscore
+    //   Funtion that make a string lowercase_with_underscore
     // Parameters:
     //   value:
-    //     the string to PATHize
+    //     a string to PATHize
     //   lower:
     //     condition to make the first letter lowercase
     // Returns:
@@ -60,6 +60,16 @@ public static class Ext
         return res.Replace("__", "_");
     }
 
+    //
+    // Summary:
+    //  Check a nullable string and set a default value
+    // Parameters:
+    //   value:
+    //     a nullable string to check
+    //   @default:
+    //     a default value
+    // Returns:
+    //     A string, value or default
     public static string WithDefault(this string? value, string @default)
     {
         if (string.IsNullOrWhiteSpace(value)) return @default;
