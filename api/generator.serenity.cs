@@ -13,15 +13,19 @@ public partial class Generator
     //     the read database
     // Returns:
     //   the generator, can only use .Serenity()
-    public static Generator BuildSerenity(Db db, string? package = null)
+    public static Generator BuildSerenity(Db db, string? package = null, string? module = null)
     {
-        package ??= "sample";
-        Console.WriteLine($"Insert app package name [{package}]");
-        package = Console.ReadLine().WithDefault(package).Trim();
-
-        Console.WriteLine($"Insert Serenity Module Name [{package}Db]");
-        var serenityModule = Console.ReadLine().WithDefault(package + "Db").Trim();
-        return new Generator(package, serenityModule, db);
+        if (string.IsNullOrEmpty(package))
+        {
+            Console.WriteLine($"Insert app package name [sample]");
+            package = Console.ReadLine().WithDefault("sample").Trim();
+        }
+        if (string.IsNullOrEmpty(module))
+        {
+            Console.WriteLine($"Insert Serenity Module Name [{package}Db]");
+            module = Console.ReadLine().WithDefault(package + "Db").Trim();
+        }
+        return new Generator(package, module, db);
     }
 
     //

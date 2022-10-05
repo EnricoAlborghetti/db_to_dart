@@ -1,6 +1,7 @@
 public partial class Coder
 {
     private String _package { get; set; }
+    private bool RelationNullable { get; set; }
     private Db Db { get; set; }
 
     public String Package => _package;
@@ -13,10 +14,13 @@ public partial class Coder
     //     the package name of the application
     //   db:
     //     the read database
-    private Coder(string package, Db db)
+    //   allNullable:
+    //     make all field nullable if true
+    private Coder(string package, Db db, bool relationNullable)
     {
         this._package = package;
         this.Db = db;
+        this.RelationNullable = relationNullable;
     }
 
     //
@@ -25,13 +29,22 @@ public partial class Coder
     // Parameters:
     //   db:
     //     the read database
+    //   allNullable:
+    //     make all field nullable if true
     // Returns:
     //   the coder
-    public static Coder Build(Db db)
+    public static Coder Build(Db db, string? package = null, bool? relationNullable = null)
     {
-        Console.WriteLine("Insert app package name [sample]");
-        var package = Console.ReadLine().WithDefault("sample").Trim();
-
-        return new Coder(package, db);
+        if (string.IsNullOrEmpty(package))
+        {
+            Console.WriteLine("Insert app package name [sample]");
+            package = Console.ReadLine().WithDefault("sample").Trim();
+        }
+        if (relationNullable == null)
+        {
+            Console.WriteLine("Relations all nullable? [y/N]");
+            relationNullable = Console.ReadLine().WithDefault("N").Trim().StartsWith("y", true, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        return new Coder(package, db, relationNullable ?? false);
     }
 }
