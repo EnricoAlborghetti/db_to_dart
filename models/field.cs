@@ -38,11 +38,14 @@ public class Field : MicroField
     //
     // Summary:
     //   Convert the field to a dart property
+    // Parameters:
+    //   api:
+    //      add late reference for api
     // Result:
     //   A string formatted
-    public string ToDart()
+    public string ToDart(bool api)
     {
-        return $"{DartType.GetName(Type)}{(Nullable ? "?" : "")} {Name.Normalize(true)};";
+        return $"{(api && !Nullable ? "late " : "")}{DartType.GetName(Type)}{(Nullable ? "? " : "")} {Name.Normalize(true)};";
     }
 
     //

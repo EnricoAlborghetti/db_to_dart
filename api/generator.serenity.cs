@@ -57,7 +57,13 @@ public partial class Generator
         #region static models
 
         Directory.CreateDirectory("output/models/serenity");
+        File.WriteAllText("output/models/serenity/error.dart", @"
+class Error {
+  String code;
+  String message;
 
+  Error({required this.code, required this.message});
+}");
         File.WriteAllText("output/models/serenity/filter.dart", @"
 class Filter {
   int take;
@@ -81,15 +87,12 @@ class FilterT<T> extends Filter {
       required super.includeColumns,
       required this.equalityFilter});
 }");
-        File.WriteAllText("output/models/serenity/web_response.dart", @"
-class Error {
-  String code;
-  String message;
+        File.WriteAllText("output/models/serenity/web_response.dart", @$"
+import 'package:{Package}/models/api/json_factory.dart';
+import 'package:{Package}/models/api/json_serializer.dart';
+import 'package:{Package}/models/serenity/error.dart';
 
-  Error({required this.code, required this.message});
-}
-
-class WebResponse<T> {
+class WebResponse<T extends JsonFactory> implements JsonFactory {{
   List<T>? entities;
   T? entity;
   dynamic values;
@@ -98,19 +101,47 @@ class WebResponse<T> {
   int? skip;
   int? take;
   Error? error;
-  bool? cache;
 
   WebResponse(
-      {this.entities,
+      {{this.entities,
       this.entity,
       this.values,
       this.localizations,
       this.totalCount,
       this.skip,
       this.take,
-      this.error,
-      this.cache});
-}");
+      this.error}});
+
+  WebResponse.fromJson(
+      Map<String, dynamic> json, JsonSerializer<T> serializer) {{
+    if (json['Entities'] != null) {{
+      entities = [];
+      json['Entities'].forEach((v) => entities!.add(serializer.fromJson(v)));
+    }}
+    if (json['Entity'] != null) {{
+      entity = serializer.fromJson(json['Entity']);
+    }}
+    values = json['Values'];
+    totalCount = json['TotalCount'];
+    skip = json['Skip'];
+    take = json['Take'];
+    error = json['Error'];
+  }}
+
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> data = <String, dynamic>{{}};
+    if (entities != null) {{
+      data['Entities'] = entities!.map((v) => v.toJson()).toList();
+    }}
+    data['Values'] = values;
+    data['TotalCount'] = totalCount;
+    data['Skip'] = skip;
+    data['Take'] = take;
+    data['Error'] = error;
+    return data;
+  }}
+}}");
         #endregion
 
 
@@ -122,8 +153,9 @@ class WebResponse<T> {
         File.WriteAllText("output/services/serenity/serenity_service_factory.dart", $@"
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
+import 'package:{this.Package}/models/api/json_factory.dart';
 
-abstract class SerenityServiceFactory<T> {{
+abstract class SerenityServiceFactory<T extends JsonFactory> {{
   Future<WebResponse<T>> list({{Filter? filter}});
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
@@ -133,10 +165,11 @@ abstract class SerenityServiceFactory<T> {{
 import 'package:dio/dio.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
+import 'package:{this.Package}/models/api/json_serializer.dart';
+import 'package:{this.Package}/models/api/json_factory.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 
-abstract class SerenityService<T>
-    implements SerenityServiceFactory {{
+abstract class SerenityService<T extends JsonFactory> implements SerenityServiceFactory<T> {{
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'SET_BASE_URL',
     headers: {{
@@ -147,6 +180,7 @@ abstract class SerenityService<T>
 
   late String apiName;
   late Filter defaultFilter;
+  late JsonSerializer<T> jsonSerializer;
 
   SerenityService() {{
     _dio.interceptors.add(LogInterceptor(responseBody: true));
@@ -154,7 +188,7 @@ abstract class SerenityService<T>
 
   Future<WebResponse<T>> _makeCall(String url, dynamic data) async {{
     final result = await _dio.post(url, data: data);
-    return result as WebResponse<T>;
+    return WebResponse.fromJson(result.data, jsonSerializer);
   }}
 
   @override
@@ -176,7 +210,7 @@ abstract class SerenityService<T>
   }}
 
   @override
-  Future<WebResponse<T>> create(dynamic entity) async {{
+  Future<WebResponse<T>> create(T entity) async {{
     return _makeCall('Services/{this.Module}/$apiName/Retrive', {{'Entity': entity}});
   }}
 }}");
@@ -185,17 +219,27 @@ abstract class SerenityService<T>
         {
             File.WriteAllText($"output/services/{entity.Name.Pathize()}_service.dart", $@"
 import 'package:{this.Package}/models/{entity.Name.Pathize()}.dart';
+import 'package:{this.Package}/models/api/json_serializer.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/services/serenity/serenity_service.dart';
+import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 
 class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}> implements {entity.Name.Singularize()}ServiceFactory {{
   {entity.Name.Singularize()}Service() {{
     apiName = '{entity.Name}';
     defaultFilter = Filter(take: 100, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
+    jsonSerializer = {entity.Name.Singularize()}JsonSerializer();
   }}
 }}
 
-abstract class {entity.Name.Singularize()}ServiceFactory {{}}");
+abstract class {entity.Name.Singularize()}ServiceFactory extends SerenityServiceFactory<{entity.Name.Singularize()}> {{}}
+
+class {entity.Name.Singularize()}JsonSerializer extends JsonSerializer<{entity.Name.Singularize()}> {{
+  @override
+  {entity.Name.Singularize()} fromJson(Map<String, dynamic> json){{
+    return {entity.Name.Singularize()}.fromJson(json);
+  }}  
+}}");
             Console.WriteLine($"Generated service for {entity.Name.Singularize()}");
         }
 

@@ -16,6 +16,7 @@ var config = builder.Build();
 var GetConnectionString = config.GetConnectionString("Default");
 var package = config.GetSection("Dart")["Package"] ?? null;
 var relationNullable = bool.Parse(config.GetSection("Dart")["RelationNullable"] ?? "false");
+var api = bool.Parse(config.GetSection("Dart")["Api"] ?? "false");
 
 // Prepare the output directory
 if (Directory.Exists("output"))
@@ -28,7 +29,7 @@ Directory.CreateDirectory("output");
 var db = Connector.MsSQL(config.GetConnectionString("Default"));
 
 // Write dart code
-var coder = Coder.Build(db, package, relationNullable);
+var coder = Coder.Build(db, package, relationNullable, api);
 
 coder.Dart();
 

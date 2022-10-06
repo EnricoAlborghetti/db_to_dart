@@ -9,6 +9,20 @@ public partial class Coder
     public void Dart()
     {
         Directory.CreateDirectory("output/models");
+        if (Api)
+        {
+            Directory.CreateDirectory("output/models/api");
+            System.IO.File.WriteAllText("output/models/api/json_factory.dart", $@"
+abstract class JsonFactory<T> {{
+  Map<String, dynamic> toJson();
+}}");
+            System.IO.File.WriteAllText("output/models/api/json_serializer.dart", $@"
+import 'package:{Package}/models/api/json_factory.dart';
+
+abstract class JsonSerializer<T extends JsonFactory> {{
+  T fromJson(Map<String, dynamic> json);
+}}");
+        }
 
         // Generate the DART class based on MSSQL structure
         foreach (var entity in Db.Tables)
@@ -18,25 +32,45 @@ public partial class Coder
                 .Select(t => t.ChildrendField!);
             var fathers = entity.Fields
                 .Where(t => t.FatherField != null)
-                .Select(t => new { FatherField = t.FatherField!, Nullable = t.Nullable || RelationNullable  });
-            var eFields = fathers
-                .Select(t => new MicroField() { Name = t.FatherField.Table.Name.Singularize(), Nullable = t.Nullable })
-                .Union(childrends.Select(t => new MicroField() { Name = t.Table.Name, Nullable = true }));
+                .Select(t => new { FatherField = t.FatherField!, Nullable = t.Nullable || RelationNullable });
+            var fFields = fathers
+                .Select(t => new MicroField() { Name = t.FatherField.Table.Name.Singularize(), Nullable = t.Nullable });
+            var ccFields = childrends.Select(t => new MicroField() { Name = t.Table.Name, Nullable = true });
+            var eFields = fFields.Union(ccFields);
             var cFields = entity.Fields
                 .Select(t => new MicroField() { Name = t.Name, Nullable = t.Nullable })
                 .Union(eFields);
 
+            var apiPart = "";
+            if (Api)
+            {
+                apiPart = @$"
+    {entity.Name.Singularize()}.fromJson(Map<String, dynamic> json){{
+        {string.Join("\n        ", entity.Fields.Select(t => $"{t.Name.Normalize(true)} = json['{t.Name}'];"))}
+        {string.Join("\n        ", ccFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = []; json[\"{t.Name}\"].forEach((v) => {t.Name.Normalize(true)}!.add({t.Name.Singularize()}.fromJson(v))); }}"))}
+        {string.Join("\n        ", fFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Singularize(true)} = {t.Name.Singularize()}.fromJson(json['{t.Name}']); }}"))}
+    }}
+
+    @override
+  Map<String, dynamic> toJson() {{
+    throw UnimplementedError();
+  }}";
+            }
+
             File.WriteAllText($"output/models/{entity.Name.Pathize()}.dart", $@"
+import 'package:{Package}/models/api/json_factory.dart';
 {string.Join("\n", eFields.Select(t => $"import './{t.Name.Pathize()}.dart';"))}
 
-class {entity.Name.Singularize()} {{
-    {string.Join("\n    ", entity.Fields.Select(t => t.ToDart()))}
+class {entity.Name.Singularize()} {(Api ? "extends JsonFactory" : "")} {{
+    {string.Join("\n    ", entity.Fields.Select(t => t.ToDart(Api)))}
 
     {string.Join("\n    ", childrends.Select(t => t.ToChildRelationDart()))}
 
     {string.Join("\n    ", fathers.Select(t => t.FatherField.ToFatherRelationDart(t.Nullable)))}
 
     {entity.Name.Singularize()}({{{string.Join(", ", cFields.Select(t => $"{(t.Nullable ? "" : "required ")}this.{t.Name.Normalize(true)}"))}}});
+
+    {apiPart}
 }}");
             Console.WriteLine($"Generated class {entity.Name.Singularize()}");
         }
