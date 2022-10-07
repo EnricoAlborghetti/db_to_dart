@@ -1,6 +1,5 @@
 public partial class Generator
 {
-
     private String Package { get; set; }
     private String Module { get; set; }
     private Db Db { get; set; }
@@ -160,6 +159,8 @@ abstract class SerenityServiceFactory<T extends JsonFactory> {{
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
   Future<WebResponse<T>> create(T entity);
+
+  Filter getDefaultFilter();
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
 import 'package:dio/dio.dart';
@@ -206,12 +207,17 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   @override
   Future<WebResponse<T>> retrieve(int entityId) async {{
     return _makeCall(
-        'Services/{this.Module}/$apiName/Retrive', {{'EntityId': entityId}});
+        'Services/{this.Module}/$apiName/Retrieve', {{'EntityId': entityId}});
   }}
 
   @override
   Future<WebResponse<T>> create(T entity) async {{
-    return _makeCall('Services/{this.Module}/$apiName/Retrive', {{'Entity': entity}});
+    return _makeCall('Services/{this.Module}/$apiName/Create', {{'Entity': entity}});
+  }}
+
+  @override
+  Filter getDefaultFilter() {{
+    return defaultFilter;
   }}
 }}");
 
