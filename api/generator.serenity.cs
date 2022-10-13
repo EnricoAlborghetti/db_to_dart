@@ -56,13 +56,29 @@ public partial class Generator
         #region static models
 
         Directory.CreateDirectory("output/models/serenity");
-        File.WriteAllText("output/models/serenity/error.dart", @"
-class Error {
-  String code;
-  String message;
+        File.WriteAllText("output/models/serenity/error.dart", @$"
+import 'package:{Package}/models/api/json_factory.dart';
 
-  Error({required this.code, required this.message});
-}");
+class Error implements JsonFactory {{
+  String? code;
+  String? message;
+
+  Error({{this.code, this.message}});
+
+  Error.fromJson(Map<String, dynamic> json) {{
+    code = json['Code'];
+    message = json['Message'];
+  }}
+
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> data = <String, dynamic>{{}};
+    data['Code'] = code;
+    data['Message'] = message;
+    return data;
+  }}
+}}
+");
         File.WriteAllText("output/models/serenity/filter.dart", @"
 class Filter {
   int take;
@@ -124,7 +140,9 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
     totalCount = json['TotalCount'];
     skip = json['Skip'];
     take = json['Take'];
-    error = json['Error'];
+    if (json['Error'] != null) {{
+      error = Error.fromJson(json['Error']);
+    }}
   }}
 
   @override
@@ -137,7 +155,9 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
     data['TotalCount'] = totalCount;
     data['Skip'] = skip;
     data['Take'] = take;
-    data['Error'] = error;
+    if (error != null) {{
+      data['Error'] = error!.toJson();
+    }}
     return data;
   }}
 }}");
