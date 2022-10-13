@@ -53,7 +53,11 @@ abstract class JsonSerializer<T extends JsonFactory> {{
 
     @override
   Map<String, dynamic> toJson() {{
-    throw UnimplementedError();
+    final Map<String, dynamic> data = <String, dynamic>{{}};
+    {string.Join("\n    ", entity.Fields.Select(t => $"data['{t.Name.Normalize(true)}'] = {t.Name.Normalize(true)};"))}
+    {string.Join("\n    ", childrends.Select(t => $"if ({t.Table.Name.Normalize(true)} != null) {{ data['{t.Table.Name.Normalize(true)}'] = {t.Table.Name.Normalize(true)}!.map((v) => v.toJson()).toList(); }}"))}
+    {string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ data['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
+    return data;
   }}";
             }
 
