@@ -82,6 +82,31 @@ public static partial class Connector
                         }
                     }
                 }
+
+                Console.WriteLine($"\nQuery PK of {table.Name}:");
+                Console.WriteLine("=========================================");
+                sql =
+                    $@"SELECT  c.name
+                            FROM sys.objects o
+                       LEFT JOIN sys.indexes i
+                            ON i.object_id = o.object_id
+                       INNER JOIN sys.index_columns ic
+                            ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+                       INNER JOIN sys.columns c
+                            ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+                       WHERE i.is_primary_key = 1
+                            AND o.name = N'{table.Name}'";
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var fieldName = reader.GetString(0);
+                            table.Fields.Where(t => t.Name == fieldName).All(t => t.PrimaryKey = true);
+                        }
+                    }
+                }
             }
 
             sql =
@@ -128,12 +153,12 @@ public static partial class Connector
 
                             if (relationField != null)
                             {
-                                var pField =  db.Tables
+                                var pField = db.Tables
                                     .First(t => t.Name == parentTable)
                                     .Fields.First(t => t.Name == parentField);
-                                    pField.ChildrendField = relationField;   
+                                pField.ChildrendField = relationField;
 
-                                relationField.FatherField =  pField;                            
+                                relationField.FatherField = pField;
                             }
                             else
                             {

@@ -75,6 +75,8 @@ class {entity.Name.Singularize()} {(Api ? "extends JsonFactory" : "")} {{
     {entity.Name.Singularize()}({{{string.Join(", ", cFields.Select(t => $"{(t.Nullable ? "" : "required ")}this.{t.Name.Normalize(true)}"))}}});
 
     {apiPart}
+
+    List<String> getPrimaryKeys() => ['{string.Join("','", entity.Fields.Where(t => t.PrimaryKey).Select(t => t.Name.Normalize(true)))}'];
 }}");
             Console.WriteLine($"Generated class {entity.Name.Singularize()}");
         }

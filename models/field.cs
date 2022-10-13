@@ -17,6 +17,7 @@ public class MicroField
 //   A field of a table
 public class Field : MicroField
 {
+    public bool PrimaryKey { get; set; }
     public DartType.DartFieldType Type { get; set; }
 
     public Field? ChildrendField { get; set; }
