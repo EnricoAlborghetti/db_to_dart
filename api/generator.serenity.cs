@@ -212,7 +212,11 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
 
   @override
   Future<WebResponse<T>> create(T entity) async {{
-    return _makeCall('Services/{this.Module}/$apiName/Create', {{'Entity': entity}});
+    throw Exception('This should be overrided to call innerCreate');
+  }}
+
+  Future<WebResponse<T>> innerCreate(Map<String, dynamic> entity) async {{
+    return _makeCall('Services/MilowDb/$apiName/Create', {{'Entity': entity}});
   }}
 
   @override
@@ -229,12 +233,22 @@ import 'package:{this.Package}/models/api/json_serializer.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/services/serenity/serenity_service.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
+import 'package:{this.Package}/models/serenity/web_response.dart';
 
 class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}> implements {entity.Name.Singularize()}ServiceFactory {{
   {entity.Name.Singularize()}Service() {{
     apiName = '{entity.Name}';
     defaultFilter = Filter(take: 100, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
     jsonSerializer = {entity.Name.Singularize()}JsonSerializer();
+  }}
+
+  @override
+  Future<WebResponse<{entity.Name.Singularize()}>> create({entity.Name.Singularize()} entity) async {{
+    final mapping = entity.toJson();
+    for (var key in entity.getPrimaryKeys()) {{
+      mapping.remove(key);      
+    }}
+    return super.innerCreate(mapping);
   }}
 }}
 
