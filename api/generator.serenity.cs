@@ -202,6 +202,8 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
         Directory.CreateDirectory("output/services/serenity");
 
         File.WriteAllText("output/services/serenity/serenity_service_factory.dart", $@"
+import 'dart:io';
+
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
@@ -211,10 +213,13 @@ abstract class SerenityServiceFactory<T extends JsonFactory> {{
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
   Future<WebResponse<T>> create(T entity);
+  Future<WebFileResponse> upload(File file);
 
   Filter getDefaultFilter();
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
