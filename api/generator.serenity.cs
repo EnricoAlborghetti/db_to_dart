@@ -102,6 +102,38 @@ class FilterT<T> extends Filter {
       required super.includeColumns,
       required this.equalityFilter});
 }");
+File.WriteAllText("output/models/serenity/web_file_response.dart", @$"
+import 'package:{Package}/models/api/json_factory.dart';
+
+class WebFileResponse implements JsonFactory {{
+  String? temporaryFile;
+  int? size;
+  bool? isImage;
+  int? width;
+  int? height;
+
+  WebFileResponse(
+      {{this.temporaryFile, this.size, this.isImage, this.width, this.height}});
+
+  WebFileResponse.fromJson(Map<String, dynamic> json) {{
+    temporaryFile = json['temporaryFile'];
+    size = json['size'];
+    isImage = json['isImage'];
+    width = json['width'];
+    height = json['height'];
+  }}
+
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> data = <String, dynamic>{{}};
+    data['temporaryFile'] = temporaryFile;
+    data['size'] = size;
+    data['isImage'] = isImage;
+    data['width'] = width;
+    data['height'] = height;
+    return data;
+  }}
+}}");
         File.WriteAllText("output/models/serenity/web_response.dart", @$"
 import 'package:{Package}/models/api/json_factory.dart';
 import 'package:{Package}/models/api/json_serializer.dart';
@@ -186,6 +218,7 @@ abstract class SerenityServiceFactory<T extends JsonFactory> {{
 import 'package:dio/dio.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
+import 'package:{this.Package}/models/serenity/web_file_response.dart';
 import 'package:{this.Package}/models/api/json_serializer.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
@@ -210,6 +243,11 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   Future<WebResponse<T>> _makeCall(String url, dynamic data) async {{
     final result = await _dio.post(url, data: data);
     return WebResponse.fromJson(result.data, jsonSerializer);
+  }}
+
+  Future<WebFileResponse> upload(File file) async {{
+    final result = await _dio.post('/File/TemporaryUpload', data: file);
+    return WebFileResponse.fromJson(result.data);
   }}
 
   @override
