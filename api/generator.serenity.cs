@@ -60,10 +60,10 @@ public partial class Generator
 import 'package:{Package}/models/api/json_factory.dart';
 
 class Error implements JsonFactory {{
-  String? code;
-  String? message;
+  late String code;
+  late String message;
 
-  Error({{this.code, this.message}});
+  Error({{required this.code, required this.message}});
 
   Error.fromJson(Map<String, dynamic> json) {{
     code = json['Code'];
@@ -104,6 +104,7 @@ class FilterT<T> extends Filter {
 }");
 File.WriteAllText("output/models/serenity/web_file_response.dart", @$"
 import 'package:{Package}/models/api/json_factory.dart';
+import 'package:{Package}/models/serenity/error.dart';
 
 class WebFileResponse implements JsonFactory {{
   String? temporaryFile;
@@ -111,31 +112,37 @@ class WebFileResponse implements JsonFactory {{
   bool? isImage;
   int? width;
   int? height;
+  Error? error;
 
   WebFileResponse(
       {{this.temporaryFile, this.size, this.isImage, this.width, this.height}});
 
   WebFileResponse.fromJson(Map<String, dynamic> json) {{
-    temporaryFile = json['temporaryFile'];
-    size = json['size'];
-    isImage = json['isImage'];
-    width = json['width'];
-    height = json['height'];
+    temporaryFile = json['TemporaryFile'];
+    size = json['Size'];
+    isImage = json['IsImage'];
+    width = json['Width'];
+    height = json['Height'];
+    if (json['Error'] != null) {{
+      error = Error.fromJson(json['Error']);
+    }}
   }}
 
   @override
   Map<String, dynamic> toJson() {{
     final Map<String, dynamic> data = <String, dynamic>{{}};
-    data['temporaryFile'] = temporaryFile;
-    data['size'] = size;
-    data['isImage'] = isImage;
-    data['width'] = width;
-    data['height'] = height;
+    data['TemporaryFile'] = temporaryFile;
+    data['Size'] = size;
+    data['IsImage'] = isImage;
+    data['Width'] = width;
+    data['Height'] = height;
+    if (error != null) {{
+      data['Error'] = error!.toJson();
+    }}
     return data;
   }}
 }}");
-        File.WriteAllText("output/models/serenity/web_response.dart", @$"
-import 'package:{Package}/models/api/json_factory.dart';
+        File.WriteAllText("output/models/serenity/web_response.dart", @$"import 'package:milow/models/api/json_factory.dart';
 import 'package:{Package}/models/api/json_serializer.dart';
 import 'package:{Package}/models/serenity/error.dart';
 
@@ -148,6 +155,8 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
   int? skip;
   int? take;
   Error? error;
+  int? entityId;
+  dynamic customData;
 
   WebResponse(
       {{this.entities,
@@ -157,7 +166,9 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
       this.totalCount,
       this.skip,
       this.take,
-      this.error}});
+      this.error,
+      this.entityId,
+      this.customData}});
 
   WebResponse.fromJson(
       Map<String, dynamic> json, JsonSerializer<T> serializer) {{
@@ -171,7 +182,8 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
     values = json['Values'];
     totalCount = json['TotalCount'];
     skip = json['Skip'];
-    take = json['Take'];
+    entityId = json['EntityId'];
+    customData = json['CustomData'];
     if (json['Error'] != null) {{
       error = Error.fromJson(json['Error']);
     }}
@@ -187,6 +199,8 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
     data['TotalCount'] = totalCount;
     data['Skip'] = skip;
     data['Take'] = take;
+    data['EntityId'] = entityId;
+    data['CustomData'] = customData;
     if (error != null) {{
       data['Error'] = error!.toJson();
     }}
@@ -205,6 +219,7 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
 import 'dart:io';
 
 import 'package:{this.Package}/models/serenity/filter.dart';
+import 'package:{this.Package}/models/serenity/web_file_response.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
 
@@ -219,6 +234,7 @@ abstract class SerenityServiceFactory<T extends JsonFactory> {{
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
@@ -250,9 +266,14 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
     return WebResponse.fromJson(result.data, jsonSerializer);
   }}
 
+  @override
   Future<WebFileResponse> upload(File file) async {{
-    final result = await _dio.post('/File/TemporaryUpload', data: file);
-    return WebFileResponse.fromJson(result.data);
+    final fileName = file.path.split('/').last;
+    final formData = FormData.fromMap({{
+      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+    }});
+    final result = await _dio.post('/File/TemporaryUpload', data: formData);
+    return WebFileResponse.fromJson(json.decode(result.data));
   }}
 
   @override
@@ -279,7 +300,7 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   }}
 
   Future<WebResponse<T>> innerCreate(Map<String, dynamic> entity) async {{
-    return _makeCall('Services/MilowDb/$apiName/Create', {{'Entity': entity}});
+    return _makeCall('Services/{this.Module}/$apiName/Create', {{'Entity': entity}});
   }}
 
   @override

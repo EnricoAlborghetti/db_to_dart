@@ -46,7 +46,7 @@ abstract class JsonSerializer<T extends JsonFactory> {{
             {
                 apiPart = @$"
     {entity.Name.Singularize()}.fromJson(Map<String, dynamic> json){{
-        {string.Join("\n        ", entity.Fields.Select(t => $"{t.Name.Normalize(true)} = json['{t.Name}'];"))}
+        {string.Join("\n        ", entity.Fields.Select(t => t.Type == DartType.DartFieldType.DATETIME ? (t.Nullable ? $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']); }}" : $"{t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']);") : $"{t.Name.Normalize(true)} = json['{t.Name}'];"))}
         {string.Join("\n        ", ccFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = []; json[\"{t.Name}\"].forEach((v) => {t.Name.Normalize(true)}!.add({t.Name.Singularize()}.fromJson(v))); }}"))}
         {string.Join("\n        ", fFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Singularize(true)} = {t.Name.Singularize()}.fromJson(json['{t.Name}']); }}"))}
     }}
