@@ -228,6 +228,7 @@ abstract class SerenityServiceFactory<T extends JsonFactory> {{
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
   Future<WebResponse<T>> create(T entity);
+  Future<WebResponse<T>> update(int entityId, T entity);
   Future<WebFileResponse> upload(File file);
 
   Filter getDefaultFilter();
@@ -292,6 +293,12 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   Future<WebResponse<T>> retrieve(int entityId) async {{
     return _makeCall(
         'Services/{this.Module}/$apiName/Retrieve', {{'EntityId': entityId}});
+  }}
+
+  @override
+  Future<WebResponse<T>> update(int entityId, T entity) async {{
+    return _makeCall(
+        'Services/MilowDb/$apiName/Update', {{'EntityId': entityId, 'Entity' : entity}});
   }}
 
   @override
