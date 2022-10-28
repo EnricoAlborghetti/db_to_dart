@@ -9,6 +9,7 @@ public partial class Coder
     public void Dart()
     {
         Directory.CreateDirectory("output/models");
+        Directory.CreateDirectory("output/models/filters");
         if (Api)
         {
             Directory.CreateDirectory("output/models/api");
@@ -59,7 +60,33 @@ abstract class JsonSerializer<T extends JsonFactory> {{
     {string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ data['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
     return data;
   }}";
+
+  var filterFields = entity.Fields.Where(t => !t.PrimaryKey);
+
+  File.WriteAllText($"output/models/filters/{entity.Name.Pathize()}_filter.dart", $@"
+import 'package:{Package}/models/serenity/filter.dart';
+import 'package:{Package}/models/api/json_factory.dart';
+
+class {entity.Name.Singularize()}Comparer extends JsonFactory {{
+    {string.Join("\n    ", filterFields.Select(t => t.ToDart(false,true)))}
+
+    {entity.Name.Singularize()}Comparer({{{string.Join(", ", filterFields.Select(t => $"this.{t.Name.Normalize(true)}"))}}});
+
+    @override
+    Map<String, dynamic> toJson() {{
+        final Map<String, dynamic> data = <String, dynamic>{{}};
+        {string.Join("\n    ", filterFields.Select(t => $"if ({t.Name.Normalize(true)} != null) {{ data['{t.Name.Normalize(true)}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? "?.toIso8601String()" : "")};}}"))}
+        return data;
+    }}
+
+}}
+
+class {entity.Name.Singularize()}Filter extends FilterT<{entity.Name.Singularize()}Comparer> {{
+
+    {entity.Name.Singularize()}Filter({{required super.take, required super.includeColumns}});
+}}");
             }
+            
 
             File.WriteAllText($"output/models/{entity.Name.Pathize()}.dart", $@"
 import 'package:{Package}/models/api/json_factory.dart';

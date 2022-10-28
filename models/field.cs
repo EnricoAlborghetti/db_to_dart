@@ -6,6 +6,8 @@ public class MicroField
     public string Name { get; set; }
     public bool Nullable { get; set; }
 
+    public bool PrimaryKey { get; set; }
+
     public MicroField()
     {
         Name = "";
@@ -44,9 +46,9 @@ public class Field : MicroField
     //      add late reference for api
     // Result:
     //   A string formatted
-    public string ToDart(bool api)
+    public string ToDart(bool api, bool nullable = false)
     {
-        return $"{(api && !Nullable ? "late " : "")}{DartType.GetName(Type)}{(Nullable ? "? " : "")} {Name.Normalize(true)};";
+        return $"{(api && !Nullable ? "late " : "")}{DartType.GetName(Type)}{((Nullable || nullable) ? "? " : "")} {Name.Normalize(true)};";
     }
 
     //

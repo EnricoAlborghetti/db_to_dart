@@ -79,29 +79,44 @@ class Error implements JsonFactory {{
   }}
 }}
 ");
-        File.WriteAllText("output/models/serenity/filter.dart", @"
-class Filter {
+        File.WriteAllText("output/models/serenity/filter.dart", @$"
+import 'package:{Package}/models/api/json_factory.dart';
+
+class Filter extends JsonFactory {{
   int take;
   List<String> includeColumns;
 
-  Filter({required this.take, required this.includeColumns});
+  Filter({{required this.take, required this.includeColumns}});
 
-  Map<String, dynamic> toJson() {
-    return {
-      'take': take,
-      'includeColumns': includeColumns,
-    };
-  }
-}
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> data = <String, dynamic>{{}};
+    data['take'] = take;
+    data['includeColumns'] = includeColumns;
+    return data;
+  }}
+}}
 
-class FilterT<T> extends Filter {
-  T equalityFilter;
+class FilterT<T extends JsonFactory> extends Filter {{
+  T? equalityFilter;
 
   FilterT(
-      {required super.take,
+      {{required super.take,
       required super.includeColumns,
-      required this.equalityFilter});
-}");
+      this.equalityFilter}});
+
+  FilterT.fromFilter(Filter filter, T entity)
+      : super(includeColumns: filter.includeColumns, take: filter.take);
+
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> data = super.toJson();
+    if (equalityFilter != null) {{
+      data['equalityFilter'] = equalityFilter!.toJson();
+    }}
+    return data;
+  }}
+}}");
 File.WriteAllText("output/models/serenity/web_file_response.dart", @$"
 import 'package:{Package}/models/api/json_factory.dart';
 import 'package:{Package}/models/serenity/error.dart';
@@ -223,15 +238,14 @@ import 'package:{this.Package}/models/serenity/web_file_response.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
 
-abstract class SerenityServiceFactory<T extends JsonFactory> {{
-  Future<WebResponse<T>> list({{Filter? filter}});
+abstract class SerenityServiceFactory<T extends JsonFactory, TF extends Filter> {{
+  Future<WebResponse<T>> list({{TF? filter}});
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
   Future<WebResponse<T>> create(T entity);
   Future<WebResponse<T>> update(int entityId, T entity);
   Future<WebFileResponse> upload(File file);
-
-  Filter getDefaultFilter();
+  TF getFilter();
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
 import 'dart:io';
@@ -245,7 +259,7 @@ import 'package:{this.Package}/models/api/json_serializer.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 
-abstract class SerenityService<T extends JsonFactory> implements SerenityServiceFactory<T> {{
+abstract class SerenityService<T extends JsonFactory, TF extends Filter> implements SerenityServiceFactory<T, TF> {{
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'SET_BASE_URL',
     headers: {{
@@ -255,7 +269,7 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   ));
 
   late String apiName;
-  late Filter defaultFilter;
+  late TF defaultFilter;
   late JsonSerializer<T> jsonSerializer;
 
   SerenityService() {{
@@ -311,9 +325,7 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
   }}
 
   @override
-  Filter getDefaultFilter() {{
-    return defaultFilter;
-  }}
+  TF getFilter() => defaultFilter;
 }}");
 
         foreach (var entity in Db.Tables)
@@ -321,15 +333,15 @@ abstract class SerenityService<T extends JsonFactory> implements SerenityService
             File.WriteAllText($"output/services/{entity.Name.Pathize()}_service.dart", $@"
 import 'package:{this.Package}/models/{entity.Name.Pathize()}.dart';
 import 'package:{this.Package}/models/api/json_serializer.dart';
-import 'package:{this.Package}/models/serenity/filter.dart';
+import 'package:{this.Package}/models/filters/{entity.Name.Pathize()}_filter.dart';
 import 'package:{this.Package}/services/serenity/serenity_service.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
 
-class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}> implements {entity.Name.Singularize()}ServiceFactory {{
+class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}, {entity.Name.Singularize()}Filter> implements {entity.Name.Singularize()}ServiceFactory {{
   {entity.Name.Singularize()}Service() {{
     apiName = '{entity.Name}';
-    defaultFilter = Filter(take: 100, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
+    defaultFilter = {entity.Name.Singularize()}Filter(take: 100, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
     jsonSerializer = {entity.Name.Singularize()}JsonSerializer();
   }}
 
@@ -343,7 +355,7 @@ class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Si
   }}
 }}
 
-abstract class {entity.Name.Singularize()}ServiceFactory extends SerenityServiceFactory<{entity.Name.Singularize()}> {{}}
+abstract class {entity.Name.Singularize()}ServiceFactory extends SerenityServiceFactory<{entity.Name.Singularize()}, {entity.Name.Singularize()}Filter> {{}}
 
 class {entity.Name.Singularize()}JsonSerializer extends JsonSerializer<{entity.Name.Singularize()}> {{
   @override
