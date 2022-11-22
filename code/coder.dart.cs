@@ -54,11 +54,11 @@ abstract class JsonSerializer<T extends JsonFactory> {{
 
     @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = <String, dynamic>{{}};
-    {string.Join("\n    ", entity.Fields.Select(t => $"data['{t.Name.Normalize(true)}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? "?.toIso8601String()" : "")};"))}
-    {string.Join("\n    ", childrends.Select(t => $"if ({t.Table.Name.Normalize(true)} != null) {{ data['{t.Table.Name.Normalize(true)}'] = {t.Table.Name.Normalize(true)}!.map((v) => v.toJson()).toList(); }}"))}
-    {string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ data['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
-    return data;
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
+    {string.Join("\n    ", entity.Fields.Select(t => $"jData['{t.Name.Normalize(true)}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? "?.toIso8601String()" : "")};"))}
+    {string.Join("\n    ", childrends.Select(t => $"if ({t.Table.Name.Normalize(true)} != null) {{ jData['{t.Table.Name.Normalize(true)}'] = {t.Table.Name.Normalize(true)}!.map((v) => v.toJson()).toList(); }}"))}
+    {string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ jData['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
+    return jData;
   }}";
 
   var filterFields = entity.Fields.Where(t => !t.PrimaryKey);
@@ -83,7 +83,7 @@ class {entity.Name.Singularize()}Comparer extends JsonFactory {{
 
 class {entity.Name.Singularize()}Filter extends FilterT<{entity.Name.Singularize()}Comparer> {{
 
-    {entity.Name.Singularize()}Filter({{required super.take, required super.includeColumns}});
+    {entity.Name.Singularize()}Filter({{super.take, super.includeColumns, super.equalityFilter}});
 }}");
             }
             

@@ -72,10 +72,10 @@ class Error implements JsonFactory {{
 
   @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = <String, dynamic>{{}};
-    data['Code'] = code;
-    data['Message'] = message;
-    return data;
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
+    jData['Code'] = code;
+    jData['Message'] = message;
+    return jData;
   }}
 }}
 ");
@@ -84,16 +84,18 @@ import 'package:{Package}/models/api/json_factory.dart';
 
 class Filter extends JsonFactory {{
   int take;
-  List<String> includeColumns;
+  List<String>? includeColumns;
 
-  Filter({{required this.take, required this.includeColumns}});
+  Filter({{this.take = 0, this.includeColumns}});
 
   @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = <String, dynamic>{{}};
-    data['take'] = take;
-    data['includeColumns'] = includeColumns;
-    return data;
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
+    jData['take'] = take;
+    if (includeColumns != null) {{
+      jData['includeColumns'] = includeColumns;
+    }}
+    return jData;
   }}
 }}
 
@@ -101,8 +103,8 @@ class FilterT<T extends JsonFactory> extends Filter {{
   T? equalityFilter;
 
   FilterT(
-      {{required super.take,
-      required super.includeColumns,
+      {{super.take,
+      super.includeColumns,
       this.equalityFilter}});
 
   FilterT.fromFilter(Filter filter, T entity)
@@ -110,11 +112,11 @@ class FilterT<T extends JsonFactory> extends Filter {{
 
   @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = super.toJson();
+    final Map<String, dynamic> jData = super.toJson();
     if (equalityFilter != null) {{
-      data['equalityFilter'] = equalityFilter!.toJson();
+      jData['equalityFilter'] = equalityFilter!.toJson();
     }}
-    return data;
+    return jData;
   }}
 }}");
 File.WriteAllText("output/models/serenity/web_file_response.dart", @$"
@@ -145,16 +147,16 @@ class WebFileResponse implements JsonFactory {{
 
   @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = <String, dynamic>{{}};
-    data['TemporaryFile'] = temporaryFile;
-    data['Size'] = size;
-    data['IsImage'] = isImage;
-    data['Width'] = width;
-    data['Height'] = height;
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
+    jData['TemporaryFile'] = temporaryFile;
+    jData['Size'] = size;
+    jData['IsImage'] = isImage;
+    jData['Width'] = width;
+    jData['Height'] = height;
     if (error != null) {{
-      data['Error'] = error!.toJson();
+      jData['Error'] = error!.toJson();
     }}
-    return data;
+    return jData;
   }}
 }}");
         File.WriteAllText("output/models/serenity/web_response.dart", @$"import 'package:milow/models/api/json_factory.dart';
@@ -206,20 +208,20 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
 
   @override
   Map<String, dynamic> toJson() {{
-    final Map<String, dynamic> data = <String, dynamic>{{}};
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
     if (entities != null) {{
-      data['Entities'] = entities!.map((v) => v.toJson()).toList();
+      jData['Entities'] = entities!.map((v) => v.toJson()).toList();
     }}
-    data['Values'] = values;
-    data['TotalCount'] = totalCount;
-    data['Skip'] = skip;
-    data['Take'] = take;
-    data['EntityId'] = entityId;
-    data['CustomData'] = customData;
+    jData['Values'] = values;
+    jData['TotalCount'] = totalCount;
+    jData['Skip'] = skip;
+    jData['Take'] = take;
+    jData['EntityId'] = entityId;
+    jData['CustomData'] = customData;
     if (error != null) {{
-      data['Error'] = error!.toJson();
+      jData['Error'] = error!.toJson();
     }}
-    return data;
+    return jData;
   }}
 }}");
         #endregion
@@ -324,8 +326,6 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
     return _makeCall('Services/{this.Module}/$apiName/Create', {{'Entity': entity}});
   }}
 
-  @override
-  TF getFilter() => defaultFilter;
 }}");
 
         foreach (var entity in Db.Tables)
@@ -341,7 +341,7 @@ import 'package:{this.Package}/models/serenity/web_response.dart';
 class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}, {entity.Name.Singularize()}Filter> implements {entity.Name.Singularize()}ServiceFactory {{
   {entity.Name.Singularize()}Service() {{
     apiName = '{entity.Name}';
-    defaultFilter = {entity.Name.Singularize()}Filter(take: 100, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
+    defaultFilter = {entity.Name.Singularize()}Filter(take: 0, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
     jsonSerializer = {entity.Name.Singularize()}JsonSerializer();
   }}
 
