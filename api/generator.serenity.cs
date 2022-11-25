@@ -224,6 +224,39 @@ class WebResponse<T extends JsonFactory> implements JsonFactory {{
     return jData;
   }}
 }}");
+        File.WriteAllText("output/models/serenity/web_create_response.dart", @$"
+import 'package:{Package}/models/api/json_factory.dart';
+import 'package:{Package}/models/api/json_serializer.dart';
+import 'package:{Package}/models/serenity/error.dart';
+
+class WebCreateResponse<T extends JsonFactory> implements JsonFactory {{
+  int? entityId;
+  dynamic customData;
+  Error? error;
+
+  WebCreateResponse({{this.entityId, this.error, this.customData}});
+
+  WebCreateResponse.fromJson(
+      Map<String, dynamic> json, JsonSerializer<T> serializer) {{
+    entityId = json['EntityId'];
+    customData = json['CustomData'];
+    if (json['Error'] != null) {{
+      error = Error.fromJson(json['Error']);
+    }}
+  }}
+
+  @override
+  Map<String, dynamic> toJson() {{
+    final Map<String, dynamic> jData = <String, dynamic>{{}};
+    if (error != null) {{
+      jData['Error'] = error!.toJson();
+    }}
+    jData['EntityId'] = entityId;
+    jData['CustomData'] = customData;
+    return jData;
+  }}
+}}
+");
         #endregion
 
 
@@ -247,13 +280,14 @@ abstract class SerenityServiceFactory<T extends JsonFactory, TF extends Filter> 
   Future<WebResponse<T>> create(T entity);
   Future<WebResponse<T>> update(int entityId, T entity);
   Future<WebFileResponse> upload(File file);
-  TF getFilter();
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
 import 'dart:io';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:{this.Package}/environment.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
 import 'package:{this.Package}/models/serenity/web_file_response.dart';
@@ -261,21 +295,44 @@ import 'package:{this.Package}/models/api/json_serializer.dart';
 import 'package:{this.Package}/models/api/json_factory.dart';
 import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 
+final dioLoggerInterceptor = InterceptorsWrapper(onRequest: (RequestOptions options, handler) {{
+  String headers = '';
+  options.headers.forEach((key, value) {{
+    headers += '| $key: $value';
+  }});
+
+  log('┌------------------------------------------------------------------------------');
+  log('''| [DIO] Request: ${{options.method}} ${{options.uri}}
+| ${{json.encode(options.data).toString()}}
+| Headers:\n$headers''');
+  log('├------------------------------------------------------------------------------');
+  handler.next(options);  //continue
+}}, onResponse: (Response response, handler) async {{
+  log('| [DIO] Response [code ${{response.statusCode}}]: ${{json.encode(response.data).toString()}}');
+  log('└------------------------------------------------------------------------------');
+  handler.next(response);
+  // return response; // continue
+}}, onError: (DioError error, handler) async {{
+  log('| [DIO] Error: ${{error.error}}: ${{error.response.toString()}}');
+  log('└------------------------------------------------------------------------------');
+  handler.next(error); //continue
+}});
+
 abstract class SerenityService<T extends JsonFactory, TF extends Filter> implements SerenityServiceFactory<T, TF> {{
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'SET_BASE_URL',
+    baseUrl: API_DOMAIN,
     headers: {{
-      'Authorization': 'SET_AUTH',
+      'Authorization': API_AUTH,
       'Content-Type': 'application/json'
     }},
   ));
 
   late String apiName;
-  late TF defaultFilter;
+  late final TF defaultFilter;
   late JsonSerializer<T> jsonSerializer;
 
   SerenityService() {{
-    _dio.interceptors.add(LogInterceptor(responseBody: true));
+    _dio.interceptors.add(dioLoggerInterceptor);
   }}
 
   Future<WebResponse<T>> _makeCall(String url, dynamic data) async {{
@@ -285,12 +342,14 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
 
   @override
   Future<WebFileResponse> upload(File file) async {{
+    _dio.interceptors.clear();
     final fileName = file.path.split('/').last;
     final formData = FormData.fromMap({{
       'file': await MultipartFile.fromFile(file.path, filename: fileName),
     }});
     final result = await _dio.post('/File/TemporaryUpload', data: formData);
     return WebFileResponse.fromJson(json.decode(result.data));
+    _dio.interceptors.add(dioLoggerInterceptor);
   }}
 
   @override
@@ -325,7 +384,6 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
   Future<WebResponse<T>> innerCreate(Map<String, dynamic> entity) async {{
     return _makeCall('Services/{this.Module}/$apiName/Create', {{'Entity': entity}});
   }}
-
 }}");
 
         foreach (var entity in Db.Tables)
@@ -341,7 +399,7 @@ import 'package:{this.Package}/models/serenity/web_response.dart';
 class {entity.Name.Singularize()}Service extends SerenityService<{entity.Name.Singularize()}, {entity.Name.Singularize()}Filter> implements {entity.Name.Singularize()}ServiceFactory {{
   {entity.Name.Singularize()}Service() {{
     apiName = '{entity.Name}';
-    defaultFilter = {entity.Name.Singularize()}Filter(take: 0, includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
+    defaultFilter = {entity.Name.Singularize()}Filter(includeColumns: ['{string.Join("','", entity.Fields.Select(t => t.Name))}']);
     jsonSerializer = {entity.Name.Singularize()}JsonSerializer();
   }}
 
