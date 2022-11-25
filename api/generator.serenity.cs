@@ -159,7 +159,7 @@ class WebFileResponse implements JsonFactory {{
     return jData;
   }}
 }}");
-        File.WriteAllText("output/models/serenity/web_response.dart", @$"import 'package:milow/models/api/json_factory.dart';
+        File.WriteAllText("output/models/serenity/web_response.dart", @$"import 'package:{Package}/models/api/json_factory.dart';
 import 'package:{Package}/models/api/json_serializer.dart';
 import 'package:{Package}/models/serenity/error.dart';
 
@@ -373,7 +373,7 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
   @override
   Future<WebResponse<T>> update(int entityId, T entity) async {{
     return _makeCall(
-        'Services/MilowDb/$apiName/Update', {{'EntityId': entityId, 'Entity' : entity}});
+        'Services/{this.Module}/$apiName/Update', {{'EntityId': entityId, 'Entity' : entity}});
   }}
 
   @override
