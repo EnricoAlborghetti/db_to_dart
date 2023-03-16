@@ -300,24 +300,32 @@ import 'package:{this.Package}/services/serenity/serenity_service_factory.dart';
 
 final dioLoggerInterceptor = InterceptorsWrapper(onRequest: (RequestOptions options, handler) {{
   String headers = '';
+  DateTime start = DateTime.now();
   options.headers.forEach((key, value) {{
     headers += '| $key: $value';
   }});
 
-  log('┌------------------------------------------------------------------------------');
-  log('''| [DIO] Request: ${{options.method}} ${{options.uri}}
-| ${{json.encode(options.data).toString()}}
-| Headers:\n$headers''');
-  log('├------------------------------------------------------------------------------');
-  handler.next(options);  //continue
+  log('''DRL┌------------------------------------------------------------------------------
+DRL| [DIO] Request: ${{options.method}} ${{options.uri}}
+DRL| ${{json.encode(options.data).toString()}}
+DRL| Headers:\n$headers
+DRL| Start:\n${{start.toIso8601String()}}
+DRL├------------------------------------------------------------------------------''');
+  handler.next(options); //continue
 }}, onResponse: (Response response, handler) async {{
-  log('| [DIO] Response [code ${{response.statusCode}}]: ${{json.encode(response.data).toString()}}');
-  log('└------------------------------------------------------------------------------');
+  DateTime end = DateTime.now();
+  log('''DRL| [DIO] Response [code ${{response.statusCode}}]: 
+DRL| Content: \n${{json.encode(response.data).toString()}}
+DRL| End:\n${{end.toIso8601String()}}
+DRL└------------------------------------------------------------------------------''');
   handler.next(response);
   // return response; // continue
 }}, onError: (DioError error, handler) async {{
-  log('| [DIO] Error: ${{error.error}}: ${{error.response.toString()}}');
-  log('└------------------------------------------------------------------------------');
+  DateTime end = DateTime.now();
+  log('''DRL| [DIO] Error: ${{error.error}}: 
+DRL| Content: \n ${{error.response.toString()}}
+DRL| End:\n${{end.toIso8601String()}}
+DRL└------------------------------------------------------------------------------''');
   handler.next(error); //continue
 }});
 
@@ -339,8 +347,12 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
   }}
 
   Future<WebResponse<T>> _makeCall(String url, dynamic data) async {{
-    final result = await _dio.post(url, data: data);
-    return WebResponse.fromJson(result.data, jsonSerializer);
+    try {{
+      final result = await _dio.post(url, data: data);
+      return WebResponse.fromJson(result.data, jsonSerializer);
+    }} catch (e) {{
+      return WebResponse();
+    }}
   }}
 
   @override
@@ -351,6 +363,7 @@ abstract class SerenityService<T extends JsonFactory, TF extends Filter> impleme
       'file': await MultipartFile.fromFile(file.path, filename: fileName),
     }});
     final result = await _dio.post('/File/TemporaryUpload', data: formData);
+    _dio.interceptors.add(dioLoggerInterceptor);
     return WebFileResponse.fromJson(json.decode(result.data));
     _dio.interceptors.add(dioLoggerInterceptor);
   }}
