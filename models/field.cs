@@ -48,7 +48,16 @@ public class Field : MicroField
     //   A string formatted
     public string ToDart(bool api, bool nullable = false)
     {
-        return $"{(api && !Nullable ? "late " : "")}{DartType.GetName(Type)}{((Nullable || nullable) ? "? " : "")} {Name.Normalize(true)};";
+        return $"{(api && !(Nullable ||nullable) ? "late " : "")}{DartType.GetName(Type)}{((Nullable || nullable) ? "? " : "")} {Name.Normalize(true)};";
+    }
+    //
+    // Summary:
+    //   Convert the field to a dart property get @override
+    // Result:
+    //   A string formatted
+    public string ToGetProperty(){
+        return $@"@override
+    {DartType.GetName(Type)} get {Name.Normalize(true)} => super.{Name.Normalize(true)}!;";
     }
 
     //
