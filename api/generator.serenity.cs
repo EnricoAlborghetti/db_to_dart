@@ -84,14 +84,16 @@ import 'package:{Package}/models/api/json_factory.dart';
 
 class Filter extends JsonFactory {{
   int take;
+  int skip;
   List<String>? includeColumns;
 
-  Filter({{this.take = 0, this.includeColumns}});
+  Filter({{this.take = 0, this.skip = 0, this.includeColumns}});
 
   @override
   Map<String, dynamic> toJson() {{
     final Map<String, dynamic> jData = <String, dynamic>{{}};
     jData['take'] = take;
+    jData['skip'] = skip;
     if (includeColumns != null) {{
       jData['includeColumns'] = includeColumns;
     }}
@@ -104,11 +106,12 @@ class FilterT<T extends JsonFactory> extends Filter {{
 
   FilterT(
       {{super.take,
+      super.skip,
       super.includeColumns,
       this.equalityFilter}});
 
   FilterT.fromFilter(Filter filter, T entity)
-      : super(includeColumns: filter.includeColumns, take: filter.take);
+      : super(includeColumns: filter.includeColumns, take: filter.take, skip: filter.skip);
 
   @override
   Map<String, dynamic> toJson() {{

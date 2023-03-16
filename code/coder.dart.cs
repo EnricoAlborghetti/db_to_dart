@@ -83,7 +83,7 @@ class {entity.Name.Singularize()}Comparer extends JsonFactory {{
 
 class {entity.Name.Singularize()}Filter extends FilterT<{entity.Name.Singularize()}Comparer> {{
 
-    {entity.Name.Singularize()}Filter({{super.take, super.includeColumns, super.equalityFilter}});
+    {entity.Name.Singularize()}Filter({{super.take, super.skip, super.includeColumns, super.equalityFilter}});
 }}");
             }
             
