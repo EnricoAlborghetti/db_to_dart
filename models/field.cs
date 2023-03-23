@@ -48,14 +48,15 @@ public class Field : MicroField
     //   A string formatted
     public string ToDart(bool api, bool nullable = false)
     {
-        return $"{(api && !(Nullable ||nullable) ? "late " : "")}{DartType.GetName(Type)}{((Nullable || nullable) ? "? " : "")} {Name.Normalize(true)};";
+        return $"{(api && !(Nullable || nullable) ? "late " : "")}{DartType.GetName(Type)}{((Nullable || nullable) ? "? " : "")} {Name.Normalize(true)};";
     }
     //
     // Summary:
     //   Convert the field to a dart property get @override
     // Result:
     //   A string formatted
-    public string ToGetProperty(){
+    public string ToGetProperty()
+    {
         return $@"@override
     {DartType.GetName(Type)} get {Name.Normalize(true)} => super.{Name.Normalize(true)}!;";
     }
@@ -81,6 +82,16 @@ public class Field : MicroField
     public string ToFatherRelationDart(bool nullable)
     {
         return $"{Table.Name.Singularize()}{(nullable ? "?" : "")} {Table.Name.Singularize(true)};";
+    }
+
+    internal string? ParseType()
+    {
+        if (Type == DartType.DartFieldType.DATETIME)
+            return $"if (json['{Name}'] != null) {{ {Name.Normalize(true)} = DateTime.parse(json['{Name}']); }}";
+        if (Type == DartType.DartFieldType.BOOL)
+           return $"{Name.Normalize(true)} = json['{Name}'] == 1 || json['{Name}'] == '1' || json['{Name}'] == true || json['{Name}'] == 'true';";
+        else
+            return $"{Name.Normalize(true)} = json['{Name}'];";
     }
 }
 

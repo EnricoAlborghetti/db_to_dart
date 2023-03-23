@@ -57,7 +57,7 @@ abstract class JsonSerializer<T extends JsonFactory> {{
 
     
     {entity.Name.Singularize()}.fromJson(Map<String, dynamic> json){{
-        {string.Join("\n        ", entity.Fields.Select(t => t.Type == DartType.DartFieldType.DATETIME ? (true ? $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']); }}" : $"{t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']);") : $"{t.Name.Normalize(true)} = json['{t.Name}'];"))}
+        {string.Join("\n        ", entity.Fields.Select(t => t.ParseType()))}
         {string.Join("\n        ", ccFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = []; json[\"{t.Name}\"].forEach((v) => {t.Name.Normalize(true)}!.add({t.Name.Singularize()}.fromJson(v))); }}"))}
         {string.Join("\n        ", fFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Singularize(true)} = {t.Name.Singularize()}.fromJson(json['{t.Name}']); }}"))}
     }}
@@ -65,7 +65,7 @@ abstract class JsonSerializer<T extends JsonFactory> {{
     @override
   Map<String, dynamic> toJson() {{
     final Map<String, dynamic> jData = <String, dynamic>{{}};
-    {string.Join("\n    ", entity.Fields.Select(t => $"jData['{t.Name}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? (true ? "?" : "") + ".toIso8601String()" : "")};"))}
+    {string.Join("\n    ", entity.Fields.Select(t => $"jData['{t.Name}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? (t.Nullable  ? "?" : "") + ".toIso8601String()" : "")};"))}
     //{string.Join("\n    ", childrends.Select(t => $"if ({t.Table.Name.Normalize(true)} != null) {{ jData['{t.Table.Name.Normalize(true)}'] = {t.Table.Name.Normalize(true)}!.map((v) => v.toJson()).toList(); }}"))}
     //{string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ jData['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
     return jData;
@@ -75,7 +75,7 @@ abstract class JsonSerializer<T extends JsonFactory> {{
 
                 apiPart = @$"
     {entity.Name.Singularize()}Base.fromJson(Map<String, dynamic> json){{
-        {string.Join("\n        ", entity.Fields.Select(t => t.Type == DartType.DartFieldType.DATETIME ? (true ? $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']); }}" : $"{t.Name.Normalize(true)} = DateTime.parse(json['{t.Name}']);") : $"{t.Name.Normalize(true)} = json['{t.Name}'];"))}
+        {string.Join("\n        ", entity.Fields.Select(t => t.ParseType()))}
         {string.Join("\n        ", ccFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Normalize(true)} = []; json[\"{t.Name}\"].forEach((v) => {t.Name.Normalize(true)}!.add({t.Name.Singularize()}.fromJson(v))); }}"))}
         {string.Join("\n        ", fFields.Select(t => $"if (json['{t.Name}'] != null) {{ {t.Name.Singularize(true)} = {t.Name.Singularize()}.fromJson(json['{t.Name}']); }}"))}
     }}
@@ -83,7 +83,7 @@ abstract class JsonSerializer<T extends JsonFactory> {{
     @override
   Map<String, dynamic> toJson() {{
     final Map<String, dynamic> jData = <String, dynamic>{{}};
-    {string.Join("\n    ", entity.Fields.Select(t => $"jData['{t.Name}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? (true ? "?" : "") + ".toIso8601String()" : "")};"))}
+    {string.Join("\n    ", entity.Fields.Select(t => $"if ({t.Name.Normalize(true)} != null) {{ jData['{t.Name}'] = {t.Name.Normalize(true) + (t.Type == DartType.DartFieldType.DATETIME ? (true ? "?" : "") + ".toIso8601String()" : "")}; }}"))}
     //{string.Join("\n    ", childrends.Select(t => $"if ({t.Table.Name.Normalize(true)} != null) {{ jData['{t.Table.Name.Normalize(true)}'] = {t.Table.Name.Normalize(true)}!.map((v) => v.toJson()).toList(); }}"))}
     //{string.Join("\n    ", fathers.Select(t => $"if ({t.FatherField.Table.Name.Singularize(true)} != null) {{ jData['{t.FatherField.Table.Name.Singularize(true)}'] = {t.FatherField.Table.Name.Singularize(true)}!.toJson(); }}"))}
     return jData;
@@ -117,7 +117,7 @@ class {entity.Name.Singularize()}Filter extends FilterT<{entity.Name.Singularize
 
             File.WriteAllText($"output/models/{entity.Name.Pathize()}.dart", $@"
 import 'package:{Package}/models/api/json_factory.dart';
-{string.Join("\n", eFields.Select(t => $"import './{t.Name.Pathize()}.dart';"))}
+{string.Join("\n", eFields.Where(t => t.Name != entity.Name).Select(t => $"import './{t.Name.Pathize()}.dart';"))}
 
 class {entity.Name.Singularize()}Base {(Api ? $"extends JsonFactory" : "")} {{
     {string.Join("\n    ", entity.Fields.Select(t => t.ToDart(Api, true)))}

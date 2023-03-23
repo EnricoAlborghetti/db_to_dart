@@ -286,7 +286,7 @@ abstract class SerenityServiceFactory<BT extends JsonFactory, T extends BT, TF e
   Future<WebResponse<T>> delete(int entityId);
   Future<WebResponse<T>> retrieve(int entityId);
   Future<WebResponse<T>> create(T entity);
-  Future<WebResponse<T>> update(int entityId, BT entity);
+  Future<WebResponse<T>> update(int entityId, BT entity, {{ Map<String, dynamic>? customData }});  
   Future<WebFileResponse> upload(File file);
 }}");
         File.WriteAllText("output/services/serenity/serenity_service.dart", $@"
@@ -295,6 +295,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:{this.Package}/environment.dart';
 import 'package:{this.Package}/models/serenity/filter.dart';
 import 'package:{this.Package}/models/serenity/web_response.dart';
@@ -349,6 +350,12 @@ abstract class SerenityService<BT extends JsonFactory, T extends BT, TF extends 
 
   SerenityService() {{
     if (DEBUG) {{
+       (_dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
+          (client) {{
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+        return client;
+      }};
       _dio.interceptors.add(dioLoggerInterceptor);
     }}
   }}
@@ -393,9 +400,9 @@ abstract class SerenityService<BT extends JsonFactory, T extends BT, TF extends 
   }}
 
   @override
-  Future<WebResponse<T>> update(int entityId, BT entity) async {{
+  Future<WebResponse<T>> update(int entityId, BT entity, {{ Map<String, dynamic>? customData }}) async {{
     return _makeCall(
-        'Services/{this.Module}/$apiName/Update', {{'EntityId': entityId, 'Entity' : entity}});
+        'Services/{this.Module}/$apiName/Update', {{'EntityId': entityId, 'Entity' : entity, 'CustomData': customData }});
   }}
 
   @override
